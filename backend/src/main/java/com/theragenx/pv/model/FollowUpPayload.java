@@ -1,10 +1,20 @@
 package com.theragenx.pv.model;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FollowUpPayload {
 
     @NotBlank(message = "extracted_at is required")
@@ -16,17 +26,11 @@ public class FollowUpPayload {
     private List<String> missingFields;
     private Map<String, Map<String, ExtractedField>> sections;
 
-    public FollowUpPayload() {}
+    @Builder.Default
+    private Map<String, Object> extraFields = new LinkedHashMap<>();
 
-    public String getExtractedAt() { return extractedAt; }
-    public void setExtractedAt(String extractedAt) { this.extractedAt = extractedAt; }
-
-    public String getSourceDocument() { return sourceDocument; }
-    public void setSourceDocument(String sourceDocument) { this.sourceDocument = sourceDocument; }
-
-    public List<String> getMissingFields() { return missingFields; }
-    public void setMissingFields(List<String> missingFields) { this.missingFields = missingFields; }
-
-    public Map<String, Map<String, ExtractedField>> getSections() { return sections; }
-    public void setSections(Map<String, Map<String, ExtractedField>> sections) { this.sections = sections; }
+    @JsonAnySetter
+    public void setExtraField(String key, Object value) {
+        extraFields.put(key, value);
+    }
 }

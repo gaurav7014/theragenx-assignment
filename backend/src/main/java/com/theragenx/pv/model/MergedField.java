@@ -1,7 +1,15 @@
 package com.theragenx.pv.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MergedField {
 
     private String value;
@@ -14,8 +22,6 @@ public class MergedField {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String previousValue;
 
-    public MergedField() {}
-
     public MergedField(ExtractedField field, String status, String previousValue) {
         this.value = field.getValue();
         this.confidence = field.getConfidence();
@@ -23,28 +29,4 @@ public class MergedField {
         this.status = status;
         this.previousValue = previousValue;
     }
-
-    public MergedField(String value, double confidence, String source, String status, String previousValue) {
-        this.value = value;
-        this.confidence = confidence;
-        this.source = source;
-        this.status = status;
-        this.previousValue = previousValue;
-    }
-
-    public String getValue() { return value; }
-    public void setValue(String value) { this.value = value; }
-
-    public double getConfidence() { return confidence; }
-    public void setConfidence(double confidence) { this.confidence = confidence; }
-
-    public String getSource() { return source; }
-    public void setSource(String source) { this.source = source; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    public String getPreviousValue() { return previousValue; }
-    public void setPreviousValue(String previousValue) { this.previousValue = previousValue; }
-
 }

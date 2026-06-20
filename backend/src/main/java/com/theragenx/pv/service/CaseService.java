@@ -82,6 +82,6 @@ public class CaseService {
             mergedSections.put(sectionEntry.getKey(), fields);
         }
         return new MergedCase(record.getCaseId(), record.getVersion(), record.getCaseClassification(),
-                record.getExtractedAt(), record.getSourceDocument(), null, mergedSections);
+                record.getExtractedAt(), record.getSourceDocument(), null, mergedSections, null);
     }
 }

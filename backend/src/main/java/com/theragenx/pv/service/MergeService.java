@@ -36,7 +36,8 @@ public class MergeService {
                 followUp.getExtractedAt(),
                 followUp.getSourceDocument(),
                 followUp.getMissingFields(),
-                mergedSections);
+                mergedSections,
+                followUp.getExtraFields().isEmpty() ? null : followUp.getExtraFields());
     }
 
     private Map<String, MergedField> mergeSection(

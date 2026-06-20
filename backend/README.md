@@ -30,7 +30,8 @@ To run tests:
 |--------|------|-------------|
 | `GET` | `/api/v1/health` | Liveness check |
 | `GET` | `/api/v1/cases` | List all cases |
-| `GET` | `/api/v1/cases/{caseId}` | Get latest version of a case |
+| `GET` | `/api/v1/cases/{caseId}` | Get latest version of a case, including field statuses if a follow-up has been processed |
+| `PUT` | `/api/v1/cases/{caseId}` | Full replace — used by `restore.sh`. Accepts a plain case body (no status fields); 404 if case doesn't exist |
 | `POST` | `/api/v1/cases/{caseId}/follow-ups` | Submit a follow-up and get merged diff |
 | `POST` | `/api/v1/queries` | Raise a reviewer query on a field |
 | `GET` | `/api/v1/queries?caseId={id}` | List queries for a case |
@@ -76,6 +77,18 @@ Expected field statuses in the response:
 - `patient.sex`, `patient.weight_kg` → `missing_in_followup`
 - `adverse_event.outcome` → `overridden`, `previous_value: "Recovered"`
 - `adverse_event.seriousness` → `overridden`, `previous_value: "Non-serious"`
+
+**Restore a case (full replace)**
+
+```bash
+curl -s -X PUT http://localhost:8081/api/v1/cases/PV-2026-0451 \
+  -H "Content-Type: application/json" \
+  -d @backups/backup-2026-06-20T120000Z.json | python3 -m json.tool
+```
+
+Returns the stored case as a `MergedCase`. Any `status` fields in the request body are ignored — the stored record starts clean.
+
+---
 
 **Raise a reviewer query**
 
@@ -126,6 +139,20 @@ When a follow-up arrives, the AI re-extracts fields from a new source document. 
 In pharmacovigilance, silently dropping a field — or worse, treating absence as "unchanged" — is dangerous. A reviewer needs to know when the AI failed to reproduce an extraction it made before. `missing_in_followup` surfaces this explicitly: the previous value is still shown, the status signals that the AI did not confirm it in the latest extraction, and the reviewer can decide whether to keep, update, or query it.
 
 The alternative (dropping the field from the merged output) would mean case v2 has fewer fields than v1 — a regression invisible to the reviewer. Marking it `unchanged` would be a lie: the AI didn't say it was unchanged, it said nothing at all.
+
+### Field statuses persist across requests
+
+After a follow-up is processed, every field in the stored case carries its merge status (`unchanged`, `overridden`, `new`, `missing_in_followup`). A subsequent `GET /cases/{caseId}` returns those statuses — they are not stripped on save. The next follow-up diffs against the current field values as normal; statuses from the previous round are replaced.
+
+A `PUT /cases/{caseId}` resets this: the restored record has no statuses, as if the case was freshly loaded.
+
+### `PUT /api/v1/cases/{caseId}` — restore only, no upsert
+
+PUT does a full in-place replace of an existing case. It returns 404 if the `caseId` is not already in the store — it will not create a new case. The request body is a plain `CaseRecord` (value/confidence/source only); status fields are silently ignored. This matches what `restore.sh` sends.
+
+### Model classes use Lombok
+
+All model classes (`CaseRecord`, `MergedCase`, `MergedField`, etc.) use `@Data @Builder @NoArgsConstructor @AllArgsConstructor` to eliminate boilerplate. `MergedField` keeps one hand-written constructor that copies from an `ExtractedField`, which Lombok cannot express.
 
 ### `GET /api/v1/cases` — deliberate addition beyond spec
 
