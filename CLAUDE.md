@@ -28,9 +28,9 @@ cd backend
 ```
 
 **Local environment notes:**
-- `gradle.properties` sets `org.gradle.java.home` to the Homebrew OpenJDK path — no manual `JAVA_HOME` needed.
-- `gradle/wrapper/gradle-wrapper.properties` points `distributionUrl` to `file:///tmp/gradle-9.6.0-bin.zip` (a local zip of the Homebrew Gradle install). If that zip is missing on a new machine, recreate it: `cd /tmp && mkdir -p gradle-9.6.0-staging/gradle-9.6.0 && cp -r /opt/homebrew/Cellar/gradle/9.6.0/libexec/* gradle-9.6.0-staging/gradle-9.6.0/ && cd gradle-9.6.0-staging && zip -qr /tmp/gradle-9.6.0-bin.zip gradle-9.6.0/`
+- `gradle/wrapper/gradle-wrapper.properties` points `distributionUrl` to `file:///tmp/gradle-9.6.0-bin.zip`. If that zip is missing, `ops/run.sh test` recreates it automatically from the system Gradle installation (resolved via `$GRADLE_HOME` or `gradle` on PATH).
 - Maven Central is accessible; only the Gradle Plugin Portal (`plugins.gradle.org`) is blocked by the corporate proxy.
+- `JAVA_HOME` must point to a JDK 17+ installation, or `java`/`javac` must be on PATH.
 
 ### Package structure
 
@@ -48,6 +48,7 @@ All routes are prefixed with `/api/v1` via `server.servlet.context-path` in `app
 |--------|------|-------|
 | `GET` | `/api/v1/cases` | Lists all cases |
 | `GET` | `/api/v1/cases/{caseId}` | Returns latest merged case |
+| `PUT` | `/api/v1/cases/{caseId}` | Full replace; used by restore.sh |
 | `POST` | `/api/v1/cases/{caseId}/follow-ups` | Merges follow-up; returns merged case with diff |
 | `POST` | `/api/v1/queries` | Body: `{caseId, fieldPath, question}` |
 | `GET` | `/api/v1/queries?caseId={id}` | Lists queries for a case |

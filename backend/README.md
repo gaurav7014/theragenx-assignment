@@ -13,7 +13,7 @@ cd backend
 ./gradlew bootRun
 ```
 
-Service starts on `http://localhost:8080/api/v1`.  
+Service starts on `http://localhost:8080/api/v1` (Docker: `http://localhost:8081/api/v1`).  
 All endpoints are prefixed with `/api/v1` via `server.servlet.context-path`.
 
 To run tests:
@@ -42,7 +42,7 @@ To run tests:
 **Get a case**
 
 ```bash
-curl -s http://localhost:8080/api/v1/cases/PV-2026-0451 | python3 -m json.tool
+curl -s http://localhost:8081/api/v1/cases/PV-2026-0451 | python3 -m json.tool
 ```
 
 **Submit a follow-up**
@@ -50,7 +50,7 @@ curl -s http://localhost:8080/api/v1/cases/PV-2026-0451 | python3 -m json.tool
 The follow-up payload mirrors the case structure but may be partial. The response annotates every field with a `status` indicating what changed.
 
 ```bash
-curl -s -X POST http://localhost:8080/api/v1/cases/PV-2026-0451/follow-ups \
+curl -s -X POST http://localhost:8081/api/v1/cases/PV-2026-0451/follow-ups \
   -H "Content-Type: application/json" \
   -d '{
     "extracted_at": "2026-05-01T10:30:00Z",
@@ -80,7 +80,7 @@ Expected field statuses in the response:
 **Raise a reviewer query**
 
 ```bash
-curl -s -X POST http://localhost:8080/api/v1/queries \
+curl -s -X POST http://localhost:8081/api/v1/queries \
   -H "Content-Type: application/json" \
   -d '{
     "case_id":    "PV-2026-0451",
@@ -92,7 +92,7 @@ curl -s -X POST http://localhost:8080/api/v1/queries \
 **List queries for a case**
 
 ```bash
-curl -s "http://localhost:8080/api/v1/queries?caseId=PV-2026-0451" | python3 -m json.tool
+curl -s "http://localhost:8081/api/v1/queries?caseId=PV-2026-0451" | python3 -m json.tool
 ```
 
 ---
@@ -136,3 +136,166 @@ The spec only defines `GET /cases/{caseId}`. A `GET /cases` endpoint that return
 ## Bootstrap data
 
 On startup, `case_v1.json` is loaded from the classpath and stored as case `PV-2026-0451`. No database is used. All state is in-memory and resets on restart.
+
+---
+
+## Operations runbook
+
+All commands run from the **repo root**. `make <target>` delegates to the scripts in `ops/`.
+
+### Start the service from scratch
+
+```bash
+make build    # build the Docker image
+make start    # bring the stack up; waits for healthcheck to pass
+```
+
+Expected output from `make start`:
+
+```
+Waiting for pv-service to become healthy...
+Service is up → http://localhost:8081/api/v1
+```
+
+If you see that line, the service is ready to accept requests.
+
+---
+
+### Verify the service is healthy
+
+```bash
+curl -s http://localhost:8081/api/v1/health
+```
+
+Expected:
+
+```json
+{"status":"UP"}
+```
+
+Anything other than HTTP 200 with that body means the service is not ready.
+
+---
+
+### Backup and restore
+
+**Back up all cases to a timestamped file:**
+
+```bash
+make backup
+```
+
+The file is written to `backups/backup-<timestamp>.json`. All log output goes to stderr; only the JSON goes to the file, so it's safe to redirect:
+
+```bash
+make backup 2>>ops.log
+```
+
+**Preview what a restore would do (no writes):**
+
+```bash
+make restore FILE=backups/backup-2026-06-20T120000Z.json ARGS=--dry-run
+```
+
+**Restore for real:**
+
+```bash
+make restore FILE=backups/backup-2026-06-20T120000Z.json
+```
+
+The restore uses `PUT /cases/{caseId}` — a full overwrite. Running it twice with the same file is safe.
+
+---
+
+### Service won't start
+
+**Docker is not running**
+
+```
+error: Docker is not running — start Docker and retry.
+```
+
+Fix: start the Docker daemon, then retry.
+
+---
+
+**Port 8081 is already in use**
+
+The container binds host port 8081. If something else is already there:
+
+```bash
+# find what's using the port
+lsof -i :8081          # macOS
+ss -tlnp | grep 8081   # Linux
+
+# stop the conflicting process, then:
+make start
+```
+
+---
+
+**Image build fails**
+
+Run the build with output visible:
+
+```bash
+make build
+# or directly:
+docker compose -f backend/docker-compose.yml build --no-cache
+```
+
+Common causes:
+- No internet access to Maven Central (needed to download dependencies)
+- Java source files won't compile — read the Gradle error in the build output
+
+---
+
+**Container starts but healthcheck never passes**
+
+```bash
+make logs
+```
+
+Look for a stack trace near startup. The most common cause is a classpath resource missing (`case_v1.json` not found). If the log shows the Spring banner but then stops, the healthcheck interval (`30s` start period) may not have elapsed yet — wait 30 seconds and check again.
+
+---
+
+### Requests are returning errors
+
+**First thing: confirm the service is up**
+
+```bash
+curl -s http://localhost:8081/api/v1/health
+```
+
+If that fails, see "Service won't start" above.
+
+**Check the container logs for the failing request**
+
+```bash
+make logs
+```
+
+Spring logs every request and exception. Find the timestamp of the failing request and read the stack trace below it.
+
+**Error shapes to know**
+
+| Status | Likely cause |
+|--------|--------------|
+| 400 | Missing or blank required field in the request body; malformed JSON; `caseId` in query endpoints doesn't exist |
+| 404 | `caseId` path variable not found in the store |
+| 500 | Unexpected server error — check logs for the stack trace |
+
+All error responses follow the same shape:
+
+```json
+{
+  "status": 404,
+  "error": "Not Found",
+  "message": "Case not found: PV-2026-0451"
+}
+```
+
+**State was lost after a restart**
+
+The store is in-memory and resets on every restart. `case_v1.json` is reloaded automatically, so the bootstrap case `PV-2026-0451` will be there. Any follow-ups submitted before the restart are gone unless you ran `make backup` first. Restore with `make restore FILE=<latest-backup>`.

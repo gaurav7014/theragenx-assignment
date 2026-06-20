@@ -54,6 +54,15 @@ public class CaseService {
         return record;
     }
 
+    public CaseRecord replaceCase(String caseId, CaseRecord record) {
+        if (!store.containsKey(caseId)) {
+            throw new CaseNotFoundException(caseId);
+        }
+        record.setCaseId(caseId);
+        store.put(caseId, record);
+        return record;
+    }
+
     public MergedCase submitFollowUp(String caseId, FollowUpPayload payload) {
         CaseRecord stored = getCase(caseId);
         MergedCase merged = mergeService.merge(stored, payload);
