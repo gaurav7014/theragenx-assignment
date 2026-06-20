@@ -42,13 +42,16 @@ On startup, load `case_v1.json` into in-memory storage as case `PV-2026-0451`. N
 
 ### Endpoints
 
+All routes are prefixed with `/api/v1` via `server.servlet.context-path` in `application.properties`. Add new endpoints under their resource path only — the prefix is applied globally.
+
 | Method | Path | Notes |
 |--------|------|-------|
-| `GET` | `/cases/{caseId}` | Returns latest merged case |
-| `POST` | `/cases/{caseId}/follow-ups` | Merges follow-up; returns merged case with diff |
-| `POST` | `/queries` | Body: `{caseId, fieldPath, question}` |
-| `GET` | `/queries?caseId={id}` | Lists queries for a case |
-| `GET` | `/health` | Liveness check |
+| `GET` | `/api/v1/cases` | Lists all cases |
+| `GET` | `/api/v1/cases/{caseId}` | Returns latest merged case |
+| `POST` | `/api/v1/cases/{caseId}/follow-ups` | Merges follow-up; returns merged case with diff |
+| `POST` | `/api/v1/queries` | Body: `{caseId, fieldPath, question}` |
+| `GET` | `/api/v1/queries?caseId={id}` | Lists queries for a case |
+| `GET` | `/api/v1/health` | Liveness check |
 
 ### Merge logic (core behavior)
 

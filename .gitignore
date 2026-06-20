@@ -23,3 +23,5 @@ out/
 
 # Node (for future frontend)
 node_modules/
+
+test-payloads/
