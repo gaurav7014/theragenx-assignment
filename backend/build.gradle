@@ -25,3 +25,8 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// Disable the plain jar — bootJar is the only artifact needed
+tasks.named('jar') {
+    enabled = false
+}
