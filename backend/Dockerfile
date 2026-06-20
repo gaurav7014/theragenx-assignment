@@ -12,6 +12,7 @@ COPY gradle ./gradle
 RUN sed -i \
     's|distributionUrl=.*|distributionUrl=https\\://services.gradle.org/distributions/gradle-9.6.0-bin.zip|' \
     gradle/wrapper/gradle-wrapper.properties \
+  && sed -i '/org.gradle.java.home/d' gradle.properties \
   && ./gradlew dependencies --no-daemon
 
 COPY src ./src
