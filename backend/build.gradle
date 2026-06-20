@@ -24,6 +24,11 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    testLogging {
+        events 'started', 'passed', 'skipped', 'failed'
+        displayGranularity 2
+        exceptionFormat 'short'
+    }
 }
 
 // Disable the plain jar — bootJar is the only artifact needed

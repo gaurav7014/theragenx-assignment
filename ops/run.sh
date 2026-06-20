@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="${SCRIPT_DIR}/../backend"
 COMPOSE_FILE="${BACKEND_DIR}/docker-compose.yml"
 SERVICE_NAME="pv-service"
-BASE_URL="http://localhost:8080/api/v1"
+BASE_URL="http://localhost:8081/api/v1"
 HEALTH_URL="${BASE_URL}/health"
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -86,6 +86,53 @@ EOF
     run_compose down
 }
 
+GRADLE_ZIP="/tmp/gradle-9.6.0-bin.zip"
+
+# Locate the Gradle installation root on any platform:
+#   1. $GRADLE_HOME env var (explicit)
+#   2. Resolve the 'gradle' binary on PATH back through symlinks;
+#      binary lives at $root/bin/gradle, so root = two dirs up
+_find_gradle_home() {
+    if [ -n "${GRADLE_HOME:-}" ] && [ -d "${GRADLE_HOME}" ]; then
+        echo "${GRADLE_HOME}"
+        return 0
+    fi
+    local gradle_cmd
+    gradle_cmd="$(command -v gradle 2>/dev/null || true)"
+    [ -z "${gradle_cmd}" ] && return 1
+    local real
+    real="$(realpath "${gradle_cmd}" 2>/dev/null \
+         || readlink -f "${gradle_cmd}" 2>/dev/null \
+         || echo "${gradle_cmd}")"
+    dirname "$(dirname "${real}")"
+}
+
+ensure_gradle_zip() {
+    if [ -f "${GRADLE_ZIP}" ]; then
+        return 0
+    fi
+    echo "Gradle distribution zip not found at ${GRADLE_ZIP}."
+    local gradle_home
+    gradle_home="$(_find_gradle_home || true)"
+    if [ -z "${gradle_home}" ] || [ ! -d "${gradle_home}" ]; then
+        die "Cannot locate a Gradle installation.
+Set \$GRADLE_HOME or put 'gradle' on PATH, then re-run.
+Or recreate the zip manually:
+  mkdir -p /tmp/gradle-9.6.0-staging/gradle-9.6.0
+  cp -r \"\$GRADLE_HOME/.\" /tmp/gradle-9.6.0-staging/gradle-9.6.0/
+  (cd /tmp/gradle-9.6.0-staging && zip -qr ${GRADLE_ZIP} gradle-9.6.0/)
+  rm -rf /tmp/gradle-9.6.0-staging"
+    fi
+    echo "Recreating zip from ${gradle_home} ..."
+    local staging="/tmp/gradle-9.6.0-staging"
+    rm -rf "${staging}"
+    mkdir -p "${staging}/gradle-9.6.0"
+    cp -r "${gradle_home}/." "${staging}/gradle-9.6.0/"
+    (cd "${staging}" && zip -qr "${GRADLE_ZIP}" gradle-9.6.0/)
+    rm -rf "${staging}"
+    echo "Gradle distribution zip recreated at ${GRADLE_ZIP}."
+}
+
 cmd_test() {
     if [ "${1:-}" = "--help" ]; then
         cat <<EOF
@@ -93,11 +140,14 @@ Usage: $(basename "$0") test
 
 Run the Gradle test suite on the host (not inside a container).
 Requires: JDK 17+ available, Gradle wrapper present in backend/.
+If the Gradle distribution zip is missing from /tmp, it is recreated
+automatically from the Homebrew installation.
 EOF
         return 0
     fi
+    ensure_gradle_zip
     cd "${BACKEND_DIR}"
-    ./gradlew test
+    ./gradlew test --console=plain
 }
 
 cmd_logs() {

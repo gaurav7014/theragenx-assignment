@@ -13,7 +13,7 @@ cd backend
 ./gradlew bootRun
 ```
 
-Service starts on `http://localhost:8080/api/v1`.  
+Service starts on `http://localhost:8080/api/v1` (Docker: `http://localhost:8081/api/v1`).  
 All endpoints are prefixed with `/api/v1` via `server.servlet.context-path`.
 
 To run tests:
@@ -42,7 +42,7 @@ To run tests:
 **Get a case**
 
 ```bash
-curl -s http://localhost:8080/api/v1/cases/PV-2026-0451 | python3 -m json.tool
+curl -s http://localhost:8081/api/v1/cases/PV-2026-0451 | python3 -m json.tool
 ```
 
 **Submit a follow-up**
@@ -50,7 +50,7 @@ curl -s http://localhost:8080/api/v1/cases/PV-2026-0451 | python3 -m json.tool
 The follow-up payload mirrors the case structure but may be partial. The response annotates every field with a `status` indicating what changed.
 
 ```bash
-curl -s -X POST http://localhost:8080/api/v1/cases/PV-2026-0451/follow-ups \
+curl -s -X POST http://localhost:8081/api/v1/cases/PV-2026-0451/follow-ups \
   -H "Content-Type: application/json" \
   -d '{
     "extracted_at": "2026-05-01T10:30:00Z",
@@ -80,7 +80,7 @@ Expected field statuses in the response:
 **Raise a reviewer query**
 
 ```bash
-curl -s -X POST http://localhost:8080/api/v1/queries \
+curl -s -X POST http://localhost:8081/api/v1/queries \
   -H "Content-Type: application/json" \
   -d '{
     "case_id":    "PV-2026-0451",
@@ -92,7 +92,7 @@ curl -s -X POST http://localhost:8080/api/v1/queries \
 **List queries for a case**
 
 ```bash
-curl -s "http://localhost:8080/api/v1/queries?caseId=PV-2026-0451" | python3 -m json.tool
+curl -s "http://localhost:8081/api/v1/queries?caseId=PV-2026-0451" | python3 -m json.tool
 ```
 
 ---
