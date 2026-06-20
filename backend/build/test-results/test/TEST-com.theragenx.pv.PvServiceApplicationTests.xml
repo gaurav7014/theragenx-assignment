@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.theragenx.pv.PvServiceApplicationTests" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-06-20T05:16:33.968Z" hostname="LAPTOP-1B72759" time="0.877">
+  <properties/>
+  <testcase name="contextLoads()" classname="com.theragenx.pv.PvServiceApplicationTests" time="0.327"/>
+  <system-out><![CDATA[10:46:34.006 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.theragenx.pv.PvServiceApplicationTests]: PvServiceApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+10:46:34.043 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.theragenx.pv.PvServiceApplication for test class com.theragenx.pv.PvServiceApplicationTests
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.0)
+
+2026-06-20T10:46:34.178+05:30  INFO 62051 --- [pv-service] [    Test worker] c.t.pv.PvServiceApplicationTests         : Starting PvServiceApplicationTests using Java 26.0.1 with PID 62051 (started by gbhinda in /Users/gbhinda/learn/theragenx-assignment/backend)
+2026-06-20T10:46:34.178+05:30  INFO 62051 --- [pv-service] [    Test worker] c.t.pv.PvServiceApplicationTests         : No active profile set, falling back to 1 default profile: "default"
+2026-06-20T10:46:34.513+05:30  INFO 62051 --- [pv-service] [    Test worker] c.t.pv.PvServiceApplicationTests         : Started PvServiceApplicationTests in 0.428 seconds (process running for 0.8)
+]]></system-out>
+  <system-err><![CDATA[Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (/Users/gbhinda/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.17.5/58f9507f5f28d1d3e7adfb4ec2fe37c29d332c9b/byte-buddy-agent-1.17.5.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>
