@@ -139,6 +139,39 @@ class FollowUpApiTest {
     }
 
     // -------------------------------------------------------------------------
+    // Status persistence — GET after POST must show statuses
+    // -------------------------------------------------------------------------
+
+    @Test
+    @DirtiesContext
+    void absentReporterSectionFieldsAreMissingInFollowUpOnBothPostAndGet() throws Exception {
+        FollowUpPayload payload = new FollowUpPayload();
+        payload.setExtractedAt("2026-05-01T10:00:00Z");
+        payload.setSourceDocument("followup_no_reporter.pdf");
+        payload.setMissingFields(java.util.List.of());
+        payload.setSections(Map.of(
+                "patient", Map.of(
+                        "initials", field("M.K.", 0.99, "p.2 §1"))));
+        String body = objectMapper.writeValueAsString(payload);
+
+        mockMvc.perform(post(FOLLOW_UP_URL, KNOWN_CASE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sections.reporter.qualification.status", is("missing_in_followup")))
+                .andExpect(jsonPath("$.sections.reporter.qualification.value", is("Physician")))
+                .andExpect(jsonPath("$.sections.reporter.country.status", is("missing_in_followup")))
+                .andExpect(jsonPath("$.sections.reporter.country.value", is("India")));
+
+        mockMvc.perform(get("/cases/{caseId}", KNOWN_CASE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sections.reporter.qualification.status", is("missing_in_followup")))
+                .andExpect(jsonPath("$.sections.reporter.qualification.value", is("Physician")))
+                .andExpect(jsonPath("$.sections.reporter.country.status", is("missing_in_followup")))
+                .andExpect(jsonPath("$.sections.reporter.country.value", is("India")));
+    }
+
+    // -------------------------------------------------------------------------
     // Query API — 400 on unknown caseId
     // -------------------------------------------------------------------------
 

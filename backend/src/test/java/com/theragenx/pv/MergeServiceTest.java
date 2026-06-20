@@ -1,6 +1,5 @@
 package com.theragenx.pv;
 
-import com.theragenx.pv.model.CaseRecord;
 import com.theragenx.pv.model.ExtractedField;
 import com.theragenx.pv.model.FollowUpPayload;
 import com.theragenx.pv.model.MergedCase;
@@ -23,7 +22,7 @@ class MergeServiceTest {
 
     @Test
     void fieldIsUnchangedWhenValueMatches() {
-        CaseRecord stored = caseWithField("patient", "age", "62", 0.91);
+        MergedCase stored = caseWithField("patient", "age", "62", 0.91);
         FollowUpPayload followUp = followUpWithField("patient", "age", "62", 0.95);
 
         MergedField result = merge(stored, followUp, "patient", "age");
@@ -34,7 +33,7 @@ class MergeServiceTest {
 
     @Test
     void fieldIsOverriddenWhenValueDiffers() {
-        CaseRecord stored = caseWithField("patient", "age", "62", 0.91);
+        MergedCase stored = caseWithField("patient", "age", "62", 0.91);
         FollowUpPayload followUp = followUpWithField("patient", "age", "63", 0.95);
 
         MergedField result = merge(stored, followUp, "patient", "age");
@@ -46,7 +45,7 @@ class MergeServiceTest {
 
     @Test
     void fieldIsNewWhenAbsentFromStoredCase() {
-        CaseRecord stored = caseWithField("patient", "age", "62", 0.91);
+        MergedCase stored = caseWithField("patient", "age", "62", 0.91);
         FollowUpPayload followUp = followUpWithField("patient", "blood_type", "A+", 0.88);
 
         MergedCase merged = mergeService.merge(stored, followUp);
@@ -61,7 +60,7 @@ class MergeServiceTest {
 
     @Test
     void fieldIsMissingInFollowUpWhenAbsentFromPayload() {
-        CaseRecord stored = caseWithField("patient", "age", "62", 0.91);
+        MergedCase stored = caseWithField("patient", "age", "62", 0.91);
         FollowUpPayload followUp = followUpWithField("patient", "initials", "M.K.", 0.99);
 
         MergedField result = merge(stored, followUp, "patient", "age");
@@ -73,7 +72,7 @@ class MergeServiceTest {
 
     @Test
     void fieldIsUnchangedWhenOnlyMetadataChanges() {
-        CaseRecord stored = caseWithField("patient", "age", "62", 0.91);
+        MergedCase stored = caseWithField("patient", "age", "62", 0.91);
         // same value, higher confidence, different source
         FollowUpPayload followUp = followUpWithFieldAndSource("patient", "age", "62", 0.99, "p.3 §1");
 
@@ -91,7 +90,7 @@ class MergeServiceTest {
 
     @Test
     void versionIsIncrementedByOne() {
-        CaseRecord stored = baseCase();
+        MergedCase stored = baseCase();
         stored.setVersion(3);
 
         MergedCase merged = mergeService.merge(stored, baseFollowUp());
@@ -101,7 +100,7 @@ class MergeServiceTest {
 
     @Test
     void extractedAtAndSourceDocumentTakenFromFollowUp() {
-        CaseRecord stored = baseCase();
+        MergedCase stored = baseCase();
         FollowUpPayload followUp = baseFollowUp();
         followUp.setExtractedAt("2026-05-01T10:00:00Z");
         followUp.setSourceDocument("followup_v2.pdf");
@@ -114,7 +113,7 @@ class MergeServiceTest {
 
     @Test
     void caseClassificationRetainedFromStoredCase() {
-        CaseRecord stored = baseCase();
+        MergedCase stored = baseCase();
         stored.setCaseClassification("significant");
 
         MergedCase merged = mergeService.merge(stored, baseFollowUp());
@@ -124,7 +123,7 @@ class MergeServiceTest {
 
     @Test
     void missingFieldsArrayPreservedFromFollowUp() {
-        CaseRecord stored = baseCase();
+        MergedCase stored = baseCase();
         FollowUpPayload followUp = baseFollowUp();
         followUp.setMissingFields(List.of("adverse_event.onset_date", "patient.weight_kg"));
 
@@ -140,7 +139,7 @@ class MergeServiceTest {
 
     @Test
     void nullSectionsInFollowUpMarksAllFieldsMissingInFollowUp() {
-        CaseRecord stored = caseWithField("patient", "age", "62", 0.91);
+        MergedCase stored = caseWithField("patient", "age", "62", 0.91);
         FollowUpPayload followUp = baseFollowUp();
         followUp.setSections(null);
 
@@ -152,7 +151,7 @@ class MergeServiceTest {
 
     @Test
     void newSectionInFollowUpAllFieldsMarkedNew() {
-        CaseRecord stored = baseCase(); // has no "reporter" section
+        MergedCase stored = baseCase(); // has no "reporter" section
         FollowUpPayload followUp = baseFollowUp();
         followUp.setSections(Map.of(
                 "reporter", Map.of(
@@ -168,9 +167,9 @@ class MergeServiceTest {
     void mixedStatusesInSingleSection() {
         // stored: age=62, sex=Male
         // follow-up: age=63 (overridden), blood_type=A+ (new), sex absent (missing_in_followup)
-        CaseRecord stored = caseWith("patient", Map.of(
-                "age", field("62", 0.91, "p.2 §1"),
-                "sex", field("Male", 0.99, "p.2 §1")));
+        MergedCase stored = caseWith("patient", Map.of(
+                "age", mergedField("62", 0.91, "p.2 §1"),
+                "sex", mergedField("Male", 0.99, "p.2 §1")));
 
         FollowUpPayload followUp = baseFollowUp();
         followUp.setSections(Map.of(
@@ -189,7 +188,7 @@ class MergeServiceTest {
 
     @Test
     void storedValueIsPreservedAfterMissingInFollowUp() {
-        CaseRecord stored = caseWithField("patient", "sex", "Male", 0.99);
+        MergedCase stored = caseWithField("patient", "sex", "Male", 0.99);
         FollowUpPayload followUp = baseFollowUp();
         followUp.setSections(Map.of("patient", Map.of(
                 "age", field("62", 0.91, "p.2 §1"))));
@@ -205,30 +204,30 @@ class MergeServiceTest {
     // Helpers
     // -------------------------------------------------------------------------
 
-    private MergedField merge(CaseRecord stored, FollowUpPayload followUp,
+    private MergedField merge(MergedCase stored, FollowUpPayload followUp,
                               String section, String fieldName) {
         return mergeService.merge(stored, followUp).getSections().get(section).get(fieldName);
     }
 
-    private CaseRecord caseWithField(String section, String fieldName, String value, double confidence) {
-        return caseWith(section, Map.of(fieldName, field(value, confidence, "p.1 §1")));
+    private MergedCase caseWithField(String section, String fieldName, String value, double confidence) {
+        return caseWith(section, Map.of(fieldName, mergedField(value, confidence, "p.1 §1")));
     }
 
-    private CaseRecord caseWith(String section, Map<String, ExtractedField> fields) {
-        CaseRecord record = baseCase();
-        record.setSections(Map.of(section, fields));
-        return record;
+    private MergedCase caseWith(String section, Map<String, MergedField> fields) {
+        MergedCase c = baseCase();
+        c.setSections(Map.of(section, fields));
+        return c;
     }
 
-    private CaseRecord baseCase() {
-        CaseRecord record = new CaseRecord();
-        record.setCaseId("TEST-001");
-        record.setVersion(1);
-        record.setCaseClassification("non-significant");
-        record.setExtractedAt("2026-01-01T00:00:00Z");
-        record.setSourceDocument("doc_v1.pdf");
-        record.setSections(Map.of());
-        return record;
+    private MergedCase baseCase() {
+        MergedCase c = new MergedCase();
+        c.setCaseId("TEST-001");
+        c.setVersion(1);
+        c.setCaseClassification("non-significant");
+        c.setExtractedAt("2026-01-01T00:00:00Z");
+        c.setSourceDocument("doc_v1.pdf");
+        c.setSections(Map.of());
+        return c;
     }
 
     private FollowUpPayload followUpWithField(String section, String fieldName,
@@ -248,6 +247,10 @@ class MergeServiceTest {
         payload.setExtractedAt("2026-02-01T00:00:00Z");
         payload.setSourceDocument("doc_v2.pdf");
         return payload;
+    }
+
+    private MergedField mergedField(String value, double confidence, String source) {
+        return new MergedField(value, confidence, source, null, null);
     }
 
     private ExtractedField field(String value, double confidence, String source) {

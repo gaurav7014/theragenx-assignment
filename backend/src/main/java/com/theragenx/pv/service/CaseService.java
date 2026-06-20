@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class CaseService {
 
-    private final ConcurrentHashMap<String, CaseRecord> store = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, MergedCase> store = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper;
     private final MergeService mergeService;
 
@@ -35,10 +35,10 @@ public class CaseService {
             throw new IllegalStateException("case_v1.json not found on classpath");
         }
         CaseRecord record = objectMapper.readValue(is, CaseRecord.class);
-        store.put(record.getCaseId(), record);
+        store.put(record.getCaseId(), toMergedCase(record));
     }
 
-    public Collection<CaseRecord> getAllCases() {
+    public Collection<MergedCase> getAllCases() {
         return store.values();
     }
 
@@ -46,49 +46,42 @@ public class CaseService {
         return store.containsKey(caseId);
     }
 
-    public CaseRecord getCase(String caseId) {
-        CaseRecord record = store.get(caseId);
+    public MergedCase getCase(String caseId) {
+        MergedCase record = store.get(caseId);
         if (record == null) {
             throw new CaseNotFoundException(caseId);
         }
         return record;
     }
 
-    public CaseRecord replaceCase(String caseId, CaseRecord record) {
+    public MergedCase replaceCase(String caseId, CaseRecord record) {
         if (!store.containsKey(caseId)) {
             throw new CaseNotFoundException(caseId);
         }
         record.setCaseId(caseId);
-        store.put(caseId, record);
-        return record;
-    }
-
-    public MergedCase submitFollowUp(String caseId, FollowUpPayload payload) {
-        CaseRecord stored = getCase(caseId);
-        MergedCase merged = mergeService.merge(stored, payload);
-        store.put(caseId, toCleanRecord(merged));
+        MergedCase merged = toMergedCase(record);
+        store.put(caseId, merged);
         return merged;
     }
 
-    // Converts a MergedCase back into a plain CaseRecord for storage.
-    // MergedField already holds the correct current value/confidence/source for every status.
-    private CaseRecord toCleanRecord(MergedCase merged) {
-        Map<String, Map<String, ExtractedField>> cleanSections = new LinkedHashMap<>();
-        for (Map.Entry<String, Map<String, MergedField>> sectionEntry : merged.getSections().entrySet()) {
-            Map<String, ExtractedField> cleanFields = new LinkedHashMap<>();
-            for (Map.Entry<String, MergedField> fieldEntry : sectionEntry.getValue().entrySet()) {
-                cleanFields.put(fieldEntry.getKey(), fieldEntry.getValue().toExtractedField());
-            }
-            cleanSections.put(sectionEntry.getKey(), cleanFields);
-        }
+    public MergedCase submitFollowUp(String caseId, FollowUpPayload payload) {
+        MergedCase stored = getCase(caseId);
+        MergedCase merged = mergeService.merge(stored, payload);
+        store.put(caseId, merged);
+        return merged;
+    }
 
-        CaseRecord updated = new CaseRecord();
-        updated.setCaseId(merged.getCaseId());
-        updated.setVersion(merged.getVersion());
-        updated.setCaseClassification(merged.getCaseClassification());
-        updated.setExtractedAt(merged.getExtractedAt());
-        updated.setSourceDocument(merged.getSourceDocument());
-        updated.setSections(cleanSections);
-        return updated;
+    private MergedCase toMergedCase(CaseRecord record) {
+        Map<String, Map<String, MergedField>> mergedSections = new LinkedHashMap<>();
+        for (Map.Entry<String, Map<String, ExtractedField>> sectionEntry : record.getSections().entrySet()) {
+            Map<String, MergedField> fields = new LinkedHashMap<>();
+            for (Map.Entry<String, ExtractedField> fieldEntry : sectionEntry.getValue().entrySet()) {
+                ExtractedField f = fieldEntry.getValue();
+                fields.put(fieldEntry.getKey(), new MergedField(f.getValue(), f.getConfidence(), f.getSource(), null, null));
+            }
+            mergedSections.put(sectionEntry.getKey(), fields);
+        }
+        return new MergedCase(record.getCaseId(), record.getVersion(), record.getCaseClassification(),
+                record.getExtractedAt(), record.getSourceDocument(), null, mergedSections);
     }
 }

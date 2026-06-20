@@ -27,17 +27,17 @@ public class CaseController {
     }
 
     @GetMapping
-    public ResponseEntity<Collection<CaseRecord>> getAllCases() {
+    public ResponseEntity<Collection<MergedCase>> getAllCases() {
         return ResponseEntity.ok(caseService.getAllCases());
     }
 
     @GetMapping("/{caseId}")
-    public ResponseEntity<CaseRecord> getCase(@PathVariable String caseId) {
+    public ResponseEntity<MergedCase> getCase(@PathVariable String caseId) {
         return ResponseEntity.ok(caseService.getCase(caseId));
     }
 
     @PutMapping("/{caseId}")
-    public ResponseEntity<CaseRecord> replaceCase(
+    public ResponseEntity<MergedCase> replaceCase(
             @PathVariable String caseId,
             @RequestBody CaseRecord record) {
         return ResponseEntity.ok(caseService.replaceCase(caseId, record));

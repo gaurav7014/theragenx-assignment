@@ -7,6 +7,8 @@ public class MergedField {
     private String value;
     private double confidence;
     private String source;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String status;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -18,6 +20,14 @@ public class MergedField {
         this.value = field.getValue();
         this.confidence = field.getConfidence();
         this.source = field.getSource();
+        this.status = status;
+        this.previousValue = previousValue;
+    }
+
+    public MergedField(String value, double confidence, String source, String status, String previousValue) {
+        this.value = value;
+        this.confidence = confidence;
+        this.source = source;
         this.status = status;
         this.previousValue = previousValue;
     }
@@ -37,11 +47,4 @@ public class MergedField {
     public String getPreviousValue() { return previousValue; }
     public void setPreviousValue(String previousValue) { this.previousValue = previousValue; }
 
-    public ExtractedField toExtractedField() {
-        ExtractedField f = new ExtractedField();
-        f.setValue(this.value);
-        f.setConfidence(this.confidence);
-        f.setSource(this.source);
-        return f;
-    }
 }
