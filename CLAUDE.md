@@ -48,6 +48,7 @@ All routes are prefixed with `/api/v1` via `server.servlet.context-path` in `app
 |--------|------|-------|
 | `GET` | `/api/v1/cases` | Lists all cases |
 | `GET` | `/api/v1/cases/{caseId}` | Returns latest merged case |
+| `PUT` | `/api/v1/cases/{caseId}` | Full replace; used by restore.sh |
 | `POST` | `/api/v1/cases/{caseId}/follow-ups` | Merges follow-up; returns merged case with diff |
 | `POST` | `/api/v1/queries` | Body: `{caseId, fieldPath, question}` |
 | `GET` | `/api/v1/queries?caseId={id}` | Lists queries for a case |
