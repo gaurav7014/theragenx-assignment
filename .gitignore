@@ -1,0 +1,25 @@
+# Gradle
+backend/build/
+backend/.gradle/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+out/
+
+# OS
+.DS_Store
+
+# Editor swap files
+*.swp
+*.swo
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Logs
+*.log
+
+# Node (for future frontend)
+node_modules/
