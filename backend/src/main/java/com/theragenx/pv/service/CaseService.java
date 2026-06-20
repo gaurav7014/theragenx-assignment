@@ -42,6 +42,10 @@ public class CaseService {
         return store.values();
     }
 
+    public boolean caseExists(String caseId) {
+        return store.containsKey(caseId);
+    }
+
     public CaseRecord getCase(String caseId) {
         CaseRecord record = store.get(caseId);
         if (record == null) {
