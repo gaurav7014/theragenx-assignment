@@ -1,16 +1,39 @@
-# React + Vite
+# PV Case Reviewer — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React reviewer UI for the pharmacovigilance case processing platform. Built with Vite. Connects to the Spring Boot backend at `http://localhost:8081/api/v1`.
 
-Currently, two official plugins are available:
+This module is implemented during the Phase 2 live session.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## What it does
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The UI lets a human reviewer inspect AI-extracted case data and validate it before sign-off.
 
-## Expanding the ESLint configuration
+**Key screens and features:**
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Case view** — loads case `PV-2026-0451` on mount from `GET /cases/PV-2026-0451`; fields are grouped into Patient, Suspect Drug, Adverse Event, and Reporter sections
+- **Confidence colour-coding** — each field shows an AI confidence score; low `< 0.80` (red), medium `0.80–0.90` (amber), high `> 0.90` (green); brand palette: navy `#0C1A36`, blue `#0077B6`, teal `#00C2E0`
+- **Conflict view** — fields with `status: "overridden"` show the new value alongside the previous value for side-by-side comparison
+- **Raise Query modal** — reviewer can flag a field with a question; submits to `POST /queries` with `{ caseId, fieldPath, question }`
+- **Case Classification selector** — mark a case as significant / non-significant / unclassified (UI-only, not persisted)
+- **Sort and filter** — sort fields by confidence (low first); filter to conflicting fields only
+- **Missing fields banner** — surfaces fields the AI could not extract
+
+---
+
+## Dev
+
+```bash
+cd frontend
+npm install
+npm run dev      # dev server at http://localhost:5173
+npm run build    # production build
+npm run lint
+```
+
+Set `VITE_API_URL` to point at a non-default backend URL:
+
+```bash
+VITE_API_URL=http://localhost:8081/api/v1 npm run dev
+```
